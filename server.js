@@ -1,5 +1,4 @@
 // server.js
-
 import express from 'express';
 import { Server as SocketIOServer } from 'socket.io';
 import http from 'http';
@@ -20,7 +19,7 @@ app.use(express.static('public'));
 
 parser.on('data', (data) => {
   console.log('Datos recibidos del Arduino: ', data.trim());
-  io.emit('arduinoData', data.trim());
+  io.emit('arduinoData', data.trim());  // Envía los datos a los clientes conectados
 });
 
 port.on('error', (err) => {
