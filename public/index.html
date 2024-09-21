@@ -74,6 +74,11 @@
       <canvas id="luzDetectadaChart"></canvas>
       <p class="sensor-value" id="luzDetectadaValue">--</p>
     </div>
+    <div class="sensor">
+      <h3>Nivel de Agua</h3>
+      <canvas id="nivelAguaChart"></canvas>
+      <p class="sensor-value" id="nivelAguaValue">-- %</p>
+    </div>
   </div>
 
   <script>
@@ -120,13 +125,15 @@
     const temperaturaChart = createLineChart(document.getElementById('temperaturaChart'), 'Temperatura (°C)');
     const humedadAmbienteChart = createLineChart(document.getElementById('humedadAmbienteChart'), 'Humedad Ambiente (%)');
     const luzDetectadaChart = createLineChart(document.getElementById('luzDetectadaChart'), 'Luz Detectada');
+    const nivelAguaChart = createLineChart(document.getElementById('nivelAguaChart'), 'Nivel de Agua (%)');
 
     // Función para actualizar los gráficos con los datos en tiempo real
     socket.on('arduinoData', function(data) {
       try {
         const sensorData = JSON.parse(data);
-        
-        // Añadir datos al gráfico de Humedad del Suelo
+        console.log(sensorData);  // Verificación de los datos recibidos
+
+        // Actualizar gráfico de Humedad del Suelo
         if (humedadSueloChart.data.labels.length > 20) {
           humedadSueloChart.data.labels.shift();
           humedadSueloChart.data.datasets[0].data.shift();
@@ -136,7 +143,7 @@
         humedadSueloChart.update();
         document.getElementById('humedadSueloValue').textContent = sensorData.humedadSuelo + '%';
 
-        // Añadir datos al gráfico de Temperatura
+        // Actualizar gráfico de Temperatura
         if (temperaturaChart.data.labels.length > 20) {
           temperaturaChart.data.labels.shift();
           temperaturaChart.data.datasets[0].data.shift();
@@ -146,7 +153,7 @@
         temperaturaChart.update();
         document.getElementById('temperaturaValue').textContent = sensorData.temperatura.toFixed(2) + '°C';
 
-        // Añadir datos al gráfico de Humedad Ambiente
+        // Actualizar gráfico de Humedad Ambiente
         if (humedadAmbienteChart.data.labels.length > 20) {
           humedadAmbienteChart.data.labels.shift();
           humedadAmbienteChart.data.datasets[0].data.shift();
@@ -156,7 +163,7 @@
         humedadAmbienteChart.update();
         document.getElementById('humedadAmbienteValue').textContent = sensorData.humedadAmbiente + '%';
 
-        // Añadir datos al gráfico de Luz Detectada
+        // Actualizar gráfico de Luz Detectada
         if (luzDetectadaChart.data.labels.length > 20) {
           luzDetectadaChart.data.labels.shift();
           luzDetectadaChart.data.datasets[0].data.shift();
@@ -165,6 +172,16 @@
         luzDetectadaChart.data.datasets[0].data.push(sensorData.luzDetectada ? 1 : 0);
         luzDetectadaChart.update();
         document.getElementById('luzDetectadaValue').textContent = sensorData.luzDetectada ? 'Sí' : 'No';
+
+        // Actualizar gráfico de Nivel de Agua
+        if (nivelAguaChart.data.labels.length > 20) {
+          nivelAguaChart.data.labels.shift();
+          nivelAguaChart.data.datasets[0].data.shift();
+        }
+        nivelAguaChart.data.labels.push(new Date().toLocaleTimeString());
+        nivelAguaChart.data.datasets[0].data.push(sensorData.nivelAgua);
+        nivelAguaChart.update();
+        document.getElementById('nivelAguaValue').textContent = sensorData.nivelAgua + '%';
 
       } catch (e) {
         console.error('Error al parsear los datos:', e);
