@@ -168,6 +168,11 @@
               title: {
                 display: true,
                 text: 'Valor'
+              },
+              ticks: {
+                callback: function(value, index, values) {
+                  return value === 1 ? 'Sí' : 'No';
+                }
               }
             }
           }
@@ -199,9 +204,9 @@
         updateChart(humedadAmbienteChart, sensorData.humedadAmbiente, 'humedadAmbienteValue');
         updateSemaforo(sensorData.humedadAmbiente, 'semaforoHumedadAmbiente', 'semaforoHumedadAmbienteValue', 'semaforoHumedadAmbienteMessage', [60, 80], "Riesgo de infección:");
 
-        // Actualizar gráfico de Luz Detectada (Ahora "Sí" o "No" en vez de 0%)
+        // Actualizar gráfico de Luz Detectada (Mostrar "Sí" o "No")
         const luzDetectada = sensorData.luzDetectada ? "Sí" : "No";
-        updateChart(luzDetectadaChart, sensorData.luzDetectada ? 1 : 0, 'luzDetectadaValue');
+        updateChart(luzDetectadaChart, sensorData.luzDetectada ? 1 : 0, 'luzDetectadaValue', luzDetectada);
         updateSemaforoLuz(sensorData.luzDetectada, 'semaforoLuzDetectada', 'semaforoLuzDetectadaValue', 'semaforoLuzDetectadaMessage');
 
         // Actualizar gráfico de Nivel de Agua
@@ -214,7 +219,7 @@
     });
 
     // Función para actualizar los gráficos
-    function updateChart(chart, value, elementId) {
+    function updateChart(chart, value, elementId, displayValue = null) {
       if (chart.data.labels.length > 20) {
         chart.data.labels.shift();
         chart.data.datasets[0].data.shift();
@@ -222,7 +227,7 @@
       chart.data.labels.push(new Date().toLocaleTimeString());
       chart.data.datasets[0].data.push(value);
       chart.update();
-      document.getElementById(elementId).textContent = value + '%';
+      document.getElementById(elementId).textContent = displayValue || value + '%';
     }
 
     // Función para actualizar los semáforos con mensajes
@@ -263,6 +268,6 @@
       document.getElementById(semaforoMessageId).textContent = messageText;
     }
   </script>
+  <br><br><br>
 </body>
-<br><br>
 </html>
