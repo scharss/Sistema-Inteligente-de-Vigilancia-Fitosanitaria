@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema Inteligente de Vigilancia Fitosanitaria</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background-color: #f5f5f5;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+      margin: 20px 0;
+    }
+    .dashboard {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+    }
+    .sensor {
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      width: 300px;
+    }
+    canvas {
+      width: 100%;
+      height: 150px;
+    }
+    .sensor-value {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    @media (max-width: 768px) {
+      .sensor {
+        width: 200px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Sistema Inteligente de Vigilancia Fitosanitaria</h1>
+  <div class="dashboard">
+    <div class="sensor">
+      <h3>Humedad del Suelo</h3>
+      <canvas id="humedadSueloChart"></canvas>
+      <p class="sensor-value" id="humedadSueloValue">-- %</p>
+    </div>
+    <div class="sensor">
+      <h3>Temperatura Ambiente</h3>
+      <canvas id="temperaturaChart"></canvas>
+      <p class="sensor-value" id="temperaturaValue">-- °C</p>
+    </div>
+    <div class="sensor">
+      <h3>Humedad Ambiente</h3>
+      <canvas id="humedadAmbienteChart"></canvas>
+      <p class="sensor-value" id="humedadAmbienteValue">-- %</p>
+    </div>
+    <div class="sensor">
+      <h3>Luz Detectada</h3>
+      <canvas id="luzDetectadaChart"></canvas>
+      <p class="sensor-value" id="luzDetectadaValue">--</p>
+    </div>
+  </div>
+
+  <script>
+    const socket = io();
+
+    // Crear gráficos de líneas con Chart.js
+    const createLineChart = (ctx, label) => {
+      return new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [], // Etiquetas de tiempo o muestras
+          datasets: [{
+            label: label,
+            data: [], // Datos que se van a actualizar en tiempo real
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 2,
+            fill: false
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            x: {
+              display: true,
+              title: {
+                display: true,
+                text: 'Tiempo'
+              }
+            },
+            y: {
+              display: true,
+              title: {
+                display: true,
+                text: 'Valor'
+              }
+            }
+          }
+        }
+      });
+    };
+
+    // Inicializar gráficos de los sensores
+    const humedadSueloChart = createLineChart(document.getElementById('humedadSueloChart'), 'Humedad del Suelo (%)');
+    const temperaturaChart = createLineChart(document.getElementById('temperaturaChart'), 'Temperatura (°C)');
+    const humedadAmbienteChart = createLineChart(document.getElementById('humedadAmbienteChart'), 'Humedad Ambiente (%)');
+    const luzDetectadaChart = createLineChart(document.getElementById('luzDetectadaChart'), 'Luz Detectada');
+
+    // Función para actualizar los gráficos con los datos en tiempo real
+    socket.on('arduinoData', function(data) {
+      try {
+        const sensorData = JSON.parse(data);
+        
+        // Añadir datos al gráfico de Humedad del Suelo
+        if (humedadSueloChart.data.labels.length > 20) {
+          humedadSueloChart.data.labels.shift();
+          humedadSueloChart.data.datasets[0].data.shift();
+        }
+        humedadSueloChart.data.labels.push(new Date().toLocaleTimeString());
+        humedadSueloChart.data.datasets[0].data.push(sensorData.humedadSuelo);
+        humedadSueloChart.update();
+        document.getElementById('humedadSueloValue').textContent = sensorData.humedadSuelo + '%';
+
+        // Añadir datos al gráfico de Temperatura
+        if (temperaturaChart.data.labels.length > 20) {
+          temperaturaChart.data.labels.shift();
+          temperaturaChart.data.datasets[0].data.shift();
+        }
+        temperaturaChart.data.labels.push(new Date().toLocaleTimeString());
+        temperaturaChart.data.datasets[0].data.push(sensorData.temperatura);
+        temperaturaChart.update();
+        document.getElementById('temperaturaValue').textContent = sensorData.temperatura.toFixed(2) + '°C';
+
+        // Añadir datos al gráfico de Humedad Ambiente
+        if (humedadAmbienteChart.data.labels.length > 20) {
+          humedadAmbienteChart.data.labels.shift();
+          humedadAmbienteChart.data.datasets[0].data.shift();
+        }
+        humedadAmbienteChart.data.labels.push(new Date().toLocaleTimeString());
+        humedadAmbienteChart.data.datasets[0].data.push(sensorData.humedadAmbiente);
+        humedadAmbienteChart.update();
+        document.getElementById('humedadAmbienteValue').textContent = sensorData.humedadAmbiente + '%';
+
+        // Añadir datos al gráfico de Luz Detectada
+        if (luzDetectadaChart.data.labels.length > 20) {
+          luzDetectadaChart.data.labels.shift();
+          luzDetectadaChart.data.datasets[0].data.shift();
+        }
+        luzDetectadaChart.data.labels.push(new Date().toLocaleTimeString());
+        luzDetectadaChart.data.datasets[0].data.push(sensorData.luzDetectada ? 1 : 0);
+        luzDetectadaChart.update();
+        document.getElementById('luzDetectadaValue').textContent = sensorData.luzDetectada ? 'Sí' : 'No';
+
+      } catch (e) {
+        console.error('Error al parsear los datos:', e);
+      }
+    });
+  </script>
+</body>
+</html>
